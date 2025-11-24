@@ -1,18 +1,126 @@
-
 {% extends "base.html" %}
 
+{% block title %}Calculadora de Calorías para tu receta :D{% endblock title %}
+
 {% block content %}
-    <p>Preparate para descubrir mas sobre tu nutricion.</p>
-    <form action="" method="POST" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="pokemon_name" class="form-label text-muted">Nombre de el alimento:</label>
-                        <input type="text" class="form-control form-control-lg rounded-3" id="comida_name" name="comida_name" required >
-                        <div class="invalid-feedback">
-                            Con usda foodDatabase ahora es mucho mas facil encontrar informacion basica de tu alimento
+<div class="p-3 mb-5 text-white bg-success text-center rounded shadow">
+    <h1 class="mb-0">
+        Calculadora de calorías de tus recetas 𖹭
+    </h1>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h2 class="card-title h5 mb-4 text-success fw-bold">
+                    Escribe tus ingredientes y su cantidad en gramos =D 
+                </h2>
+
+                <form action="{{ url_for('calcular') }}" method="POST">
+                    <div id="contenedor-ingredientes" class="mb-3">
+                        
+                        <!-- Campos de Ingredientes: 1 al 10 -->
+                        {% for i in range(1, 11) %}
+                        {% set nombre_key = 'nombre_' ~ i %}
+                        {% set gramos_key = 'gramos_' ~ i %}
+                        <div class="ingrediente-item input-group mb-2">
+                            <span class="input-group-text bg-success text-white fw-bold">#{{ i }}</span>
+                            <input 
+                                type="text" 
+                                placeholder="Nombre del Ingrediente (Ej: Arroz)" 
+                                class="form-control" 
+                                name="{{ nombre_key }}" 
+                                value="{{ submitted_data[nombre_key] if submitted_data else '' }}" 
+                            />
+                            <input 
+                                type="number" 
+                                placeholder="Gramos" 
+                                class="form-control w-25 text-end" 
+                                min="0" 
+                                name="{{ gramos_key }}" 
+                                value="{{ submitted_data[gramos_key] if submitted_data else '' }}" 
+                            />
                         </div>
+                        {% endfor %}
+                        
                     </div>
-                    <button type="submit" class="btn btn-secondary w-100 btn-lg shadow-sm mt-3 rounded-3">
-                        <i class="bi bi-search me-1"></i> buscar
+
+                    <button
+                    type="submit"
+                    id="btn-calcular"
+                    class="btn btn-success w-100 btn-lg mt-3 shadow-sm"
+                    >
+                    Calcular Calorías
                     </button>
                 </form>
-{% endblock %}
+
+                {% if submitted_data and not detalle_ingredientes %}
+                <div class="mt-4 p-3 rounded text-sm alert alert-warning border-0">
+                    No se introdujo ningún ingrediente válido con más de 0 gramos. Por
+                    favor, revisa tus entradas.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sección de Resultados Totales -->
+        {% if total_calorias is not none %}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h2 class="card-title h5 mb-4 text-success fw-bold">
+                    Resultado Total
+                </h2>
+
+                <div id="resumen-resultados" class="text-center mb-4">
+                    <div class="card bg-success text-white p-4 border-0 shadow-lg">
+                        <p class="mb-1 fs-5">Calorías Totales de la Receta (kcal)</p>
+                        <p id="total-calorias" class="display-3 fw-bolder mb-0">
+                            {{ total_calorias }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Detalle de Ingredientes -->
+                {% if detalle_ingredientes %}
+                <h3 class="h6 mt-5 mb-3 text-muted">Detalle por ingrediente:</h3>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Ingrediente (Base USDA)</th>
+                                <th class="text-end">Gramos</th>
+                                <th class="text-end">Kcal Aportadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in detalle_ingredientes %}
+                            <tr>
+                                <td>
+                                    {% if not detalle.encontrado %}
+                                    <span class="text-danger fw-bold">⚠️ {{ detalle.nombre }}</span>
+                                    {% else %}
+                                    {{ detalle.nombre }}
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ detalle.gramos|round(0) }}</td>
+                                <td class="text-end fw-bold">{{ detalle.calorias }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        {% else %}
+        <!-- Mensaje Inicial si no hay resultados -->
+        <p class="text-muted fst-italic text-center mt-5" id="mensaje-inicial">
+            Completa los campos de arriba y haz clic en "Calcular Calorías".
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}
